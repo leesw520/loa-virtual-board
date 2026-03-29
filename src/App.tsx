@@ -663,6 +663,31 @@ function App() {
         onClose={() => setModal(null)}
         actions={
           <>
+            {modal?.type === 'environment' && isViewer ? (
+              <>
+                <div className="player-toggle-group modal-actions-disabled" aria-disabled>
+                  {state.players.map((player) => (
+                    <button
+                      key={`buyer-v-${player.id}`}
+                      type="button"
+                      disabled
+                      className={buyerId === player.id ? 'active' : ''}
+                    >
+                      {player.name}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" className="modal-action-muted" disabled>
+                  구매
+                </button>
+                <button type="button" onClick={() => setModal(null)}>
+                  확인
+                </button>
+                <button type="button" onClick={() => setModal(null)}>
+                  취소
+                </button>
+              </>
+            ) : null}
             {modal?.type === 'environment' && !isViewer ? (
               <>
                 <div className="player-toggle-group">
@@ -704,31 +729,54 @@ function App() {
                 >
                   구매
                 </button>
+                <button type="button" onClick={() => setModal(null)}>
+                  취소
+                </button>
+              </>
+            ) : null}
+            {modal?.type === 'bug' && isViewer ? (
+              <>
+                <button type="button" className="modal-action-muted" disabled>
+                  사용
+                </button>
+                <button type="button" onClick={() => setModal(null)}>
+                  확인
+                </button>
+                <button type="button" onClick={() => setModal(null)}>
+                  취소
+                </button>
               </>
             ) : null}
             {modal?.type === 'bug' && !isViewer ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setBugUndo((prev) => [
-                    ...prev,
-                    {
-                      prevDeck: [...state.bugs.deck],
-                      prevMarket: [...state.bugs.market],
-                      prevDiscard: [...state.bugs.discard],
-                    },
-                  ])
-                  dispatch({ type: 'setPendingBugUse', payload: { cardId: modal.id } })
-                  dispatch({ type: 'confirmPending', clientId })
-                  setModal(null)
-                }}
-              >
-                사용
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBugUndo((prev) => [
+                      ...prev,
+                      {
+                        prevDeck: [...state.bugs.deck],
+                        prevMarket: [...state.bugs.market],
+                        prevDiscard: [...state.bugs.discard],
+                      },
+                    ])
+                    dispatch({ type: 'setPendingBugUse', payload: { cardId: modal.id } })
+                    dispatch({ type: 'confirmPending', clientId })
+                    setModal(null)
+                  }}
+                >
+                  사용
+                </button>
+                <button type="button" onClick={() => setModal(null)}>
+                  취소
+                </button>
+              </>
+            ) : null}
+            {modal?.type !== 'environment' && modal?.type !== 'bug' ? (
+              <button type="button" onClick={() => setModal(null)}>
+                {isViewer ? '닫기' : '취소'}
               </button>
             ) : null}
-            <button type="button" onClick={() => setModal(null)}>
-              {isViewer ? '닫기' : '취소'}
-            </button>
           </>
         }
       />

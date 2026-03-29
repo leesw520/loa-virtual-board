@@ -72,9 +72,8 @@ function DeckColumn({
         <button
           key={`${title}-${id}`}
           type="button"
-          className="card-button"
-          disabled={readOnly}
-          title={readOnly ? '뷰어는 조작할 수 없습니다' : undefined}
+          className={`card-button${readOnly ? ' card-button-viewer' : ''}`}
+          title={readOnly ? `${title} 공개 카드 — 확대 보기` : undefined}
           onClick={() => onOpen(id)}
         >
           <CardImage

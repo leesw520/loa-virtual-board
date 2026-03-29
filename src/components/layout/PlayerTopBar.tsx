@@ -34,43 +34,25 @@ function EnvironmentThumbs({
       className={`player-env-strip${compact ? ' player-env-strip--compact' : ''}`}
       aria-label="귀속 지형 카드"
     >
-      {cardIds.map((id, index) =>
-        readOnly ? (
-          <div
-            key={`env-${index}-${id}`}
-            className="player-env-thumb-readonly"
-            title={`지형 카드 ${id + 1}`}
-          >
-            <CardImage
-              src={imagePath('environments')}
-              index={id}
-              columns={10}
-              rows={5}
-              alt={`지형 카드 ${id + 1}`}
-              className="player-env-thumb"
-              placeholderLabel={`${id + 1}`}
-            />
-          </div>
-        ) : (
-          <button
-            key={`env-${index}-${id}`}
-            type="button"
-            className="card-button player-env-thumb-btn"
-            onClick={() => onOpen(id)}
-            title={`지형 카드 ${id + 1}`}
-          >
-            <CardImage
-              src={imagePath('environments')}
-              index={id}
-              columns={10}
-              rows={5}
-              alt={`지형 카드 ${id + 1}`}
-              className="player-env-thumb"
-              placeholderLabel={`${id + 1}`}
-            />
-          </button>
-        ),
-      )}
+      {cardIds.map((id, index) => (
+        <button
+          key={`env-${index}-${id}`}
+          type="button"
+          className={`card-button player-env-thumb-btn${readOnly ? ' card-button-viewer' : ''}`}
+          onClick={() => onOpen(id)}
+          title={readOnly ? `지형 카드 ${id + 1} (확대 보기)` : `지형 카드 ${id + 1}`}
+        >
+          <CardImage
+            src={imagePath('environments')}
+            index={id}
+            columns={10}
+            rows={5}
+            alt={`지형 카드 ${id + 1}`}
+            className="player-env-thumb"
+            placeholderLabel={`${id + 1}`}
+          />
+        </button>
+      ))}
     </div>
   )
 }
@@ -110,35 +92,23 @@ export function PlayerTopBar({
               ) : (
                 <article key={player.id} className={`player-slot player-card-inline player-${player.color}`}>
                   <h3>{player.name}</h3>
-                  {readOnly ? (
-                    <div className="special-card-hit-readonly" aria-label={`${player.name} 특수동물`}>
-                      <CardImage
-                        src={imagePath('special_animals')}
-                        index={player.specialAnimalId}
-                        columns={3}
-                        rows={3}
-                        alt={`${player.name} 특수동물`}
-                        className="mini-special"
-                        placeholderLabel="특수"
-                      />
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="card-button special-card-hit"
-                      onClick={() => onOpenSpecialAnimal(player.specialAnimalId)}
-                    >
-                      <CardImage
-                        src={imagePath('special_animals')}
-                        index={player.specialAnimalId}
-                        columns={3}
-                        rows={3}
-                        alt={`${player.name} 특수동물`}
-                        className="mini-special"
-                        placeholderLabel="특수"
-                      />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={`card-button special-card-hit${readOnly ? ' card-button-viewer' : ''}`}
+                    onClick={() => onOpenSpecialAnimal(player.specialAnimalId)}
+                    title={readOnly ? `${player.name} 특수동물 (확대 보기)` : undefined}
+                    aria-label={`${player.name} 특수동물`}
+                  >
+                    <CardImage
+                      src={imagePath('special_animals')}
+                      index={player.specialAnimalId}
+                      columns={3}
+                      rows={3}
+                      alt={`${player.name} 특수동물`}
+                      className="mini-special"
+                      placeholderLabel="특수"
+                    />
+                  </button>
                   <p className="player-terrain-count">지형 {player.environments.length}장</p>
                   <EnvironmentThumbs
                     cardIds={player.environments}
