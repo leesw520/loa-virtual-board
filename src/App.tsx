@@ -27,8 +27,15 @@ import { imagePath } from './utils/assets'
 const DEFAULT_ROOM_ID = 'default-room'
 const HOST_TOKEN_KEY = 'loa_host_token'
 const HOST_TOKEN_EXPIRES_KEY = 'loa_host_token_expires'
-const HOST_ID = import.meta.env.VITE_HOST_ID ?? 'admin'
-const HOST_PASSWORD = import.meta.env.VITE_HOST_PASSWORD ?? 'amazonia'
+
+/** 빈 Secret(\"\")은 ?? 로는 기본값으로 안 넘어가서 || 처리 */
+function viteEnvOrDefault(value: string | undefined, fallback: string) {
+  const t = value?.trim()
+  return t ? t : fallback
+}
+
+const HOST_ID = viteEnvOrDefault(import.meta.env.VITE_HOST_ID, 'admin')
+const HOST_PASSWORD = viteEnvOrDefault(import.meta.env.VITE_HOST_PASSWORD, 'amazonia')
 
 type AppPage = 'rooms' | 'host' | 'room'
 
@@ -146,7 +153,7 @@ function App() {
   }
 
   const handleHostLogin = () => {
-    if (hostId.trim() !== HOST_ID || hostPassword !== HOST_PASSWORD) {
+    if (hostId.trim() !== HOST_ID || hostPassword.trim() !== HOST_PASSWORD) {
       setAuthError('관리자 계정 정보가 올바르지 않습니다.')
       return
     }
