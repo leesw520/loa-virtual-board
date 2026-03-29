@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useState } from 'react'
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import './App.css'
 import { AnimalBoard } from './components/cards/AnimalBoard'
 import { EnvironmentBugBoard } from './components/cards/EnvironmentBugBoard'
@@ -21,7 +21,7 @@ import {
 import { firestore, isFirebaseConfigured } from './lib/firebase'
 import { pushGameState, subscribeGameState } from './lib/realtimeGame'
 import { emptyGameState, gameReducer } from './state/gameStore'
-import type { PlayerSetup } from './types/game'
+import type { GameState, PlayerSetup } from './types/game'
 import { imagePath } from './utils/assets'
 
 const DEFAULT_ROOM_ID = 'default-room'
@@ -79,6 +79,10 @@ function clearHostToken() {
   localStorage.removeItem(HOST_TOKEN_EXPIRES_KEY)
 }
 
+function isSameGameState(a: GameState, b: GameState) {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
 function App() {
   const params = useMemo(() => new URLSearchParams(window.location.search), [window.location.search])
   const page = (params.get('page') as AppPage | null) ?? (params.get('room') ? 'room' : 'rooms')
@@ -103,6 +107,7 @@ function App() {
   const isViewer = !isHostSession
 
   const [state, dispatch] = useReducer(gameReducer, emptyGameState)
+  const stateRef = useRef(state)
   const [collapsedTopBar, setCollapsedTopBar] = useState(false)
   const [modal, setModal] = useState<
     | null
@@ -147,6 +152,10 @@ function App() {
       prevDiscard: number[]
     }>
   >([])
+
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
 
   const go = (nextPage: AppPage, roomId = DEFAULT_ROOM_ID, hostToken?: string) => {
     window.location.href = makeUrl(nextPage, roomId, hostToken)
@@ -214,6 +223,9 @@ function App() {
       return
     }
     const unsubscribe = subscribeGameState(firestore, queryRoom, (nextState) => {
+      if (isSameGameState(stateRef.current, nextState)) {
+        return
+      }
       dispatch({ type: 'hydrate', payload: { state: nextState } })
     })
     return () => unsubscribe()
