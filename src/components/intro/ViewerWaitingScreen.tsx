@@ -14,8 +14,7 @@ export function ViewerWaitingScreen({ roomId }: ViewerWaitingScreenProps) {
           Room: <code>{roomId}</code>
         </p>
         <p className="muted viewer-wait-hint">
-          URL에 <code>?role=view</code> 가 붙어 있습니다. 조작은 호스트(
-          <code>?role=host</code> 또는 <code>role</code> 생략)만 가능합니다.
+          뷰어는 조작할 수 없습니다. 관리자 인증 후 방에 들어온 호스트만 게임 상태를 변경할 수 있습니다.
         </p>
       </div>
     </div>

@@ -23,13 +23,77 @@ import { pushGameState, subscribeGameState } from './lib/realtimeGame'
 import { emptyGameState, gameReducer } from './state/gameStore'
 import type { PlayerSetup } from './types/game'
 import { imagePath } from './utils/assets'
-import { isViewerMode } from './utils/roomRole'
+
+const DEFAULT_ROOM_ID = 'default-room'
+const HOST_TOKEN_KEY = 'loa_host_token'
+const HOST_TOKEN_EXPIRES_KEY = 'loa_host_token_expires'
+const HOST_ID = import.meta.env.VITE_HOST_ID ?? 'admin'
+const HOST_PASSWORD = import.meta.env.VITE_HOST_PASSWORD ?? 'amazonia'
+
+type AppPage = 'rooms' | 'host' | 'room'
+
+function makeUrl(page: AppPage, roomId = DEFAULT_ROOM_ID, hostToken?: string) {
+  const params = new URLSearchParams(window.location.search)
+  params.set('page', page)
+  params.set('room', roomId)
+  if (hostToken) {
+    params.set('hostToken', hostToken)
+  } else {
+    params.delete('hostToken')
+  }
+  params.delete('role')
+  return `${window.location.pathname}?${params.toString()}`
+}
+
+function createHostToken() {
+  return `${Date.now().toString(36)}-${crypto.randomUUID()}`
+}
+
+function readValidHostToken() {
+  const token = localStorage.getItem(HOST_TOKEN_KEY)
+  const expiresRaw = localStorage.getItem(HOST_TOKEN_EXPIRES_KEY)
+  const expires = Number(expiresRaw ?? 0)
+  if (!token || !Number.isFinite(expires) || Date.now() > expires) {
+    localStorage.removeItem(HOST_TOKEN_KEY)
+    localStorage.removeItem(HOST_TOKEN_EXPIRES_KEY)
+    return ''
+  }
+  return token
+}
+
+function saveHostToken(token: string) {
+  const expires = Date.now() + 12 * 60 * 60 * 1000
+  localStorage.setItem(HOST_TOKEN_KEY, token)
+  localStorage.setItem(HOST_TOKEN_EXPIRES_KEY, String(expires))
+}
+
+function clearHostToken() {
+  localStorage.removeItem(HOST_TOKEN_KEY)
+  localStorage.removeItem(HOST_TOKEN_EXPIRES_KEY)
+}
 
 function App() {
-  const queryRoom =
-    new URLSearchParams(window.location.search).get('room')?.trim() || 'default-room'
+  const params = useMemo(() => new URLSearchParams(window.location.search), [window.location.search])
+  const page = (params.get('page') as AppPage | null) ?? (params.get('room') ? 'room' : 'rooms')
+  const queryRoom = params.get('room')?.trim() || DEFAULT_ROOM_ID
+  const role = params.get('role')?.trim().toLowerCase() ?? ''
+  const urlHostToken = params.get('hostToken')?.trim() ?? ''
   const clientId = useMemo(() => crypto.randomUUID(), [])
-  const isViewer = useMemo(() => isViewerMode(), [])
+  const [authVersion, setAuthVersion] = useState(0)
+  const [hostId, setHostId] = useState('')
+  const [hostPassword, setHostPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+
+  const savedHostToken = useMemo(() => readValidHostToken(), [authVersion])
+  const isHostSession = Boolean(
+    page === 'room' &&
+      savedHostToken &&
+      urlHostToken &&
+      savedHostToken === urlHostToken &&
+      role !== 'view' &&
+      role !== 'viewer',
+  )
+  const isViewer = !isHostSession
 
   const [state, dispatch] = useReducer(gameReducer, emptyGameState)
   const [collapsedTopBar, setCollapsedTopBar] = useState(false)
@@ -76,6 +140,37 @@ function App() {
       prevDiscard: number[]
     }>
   >([])
+
+  const go = (nextPage: AppPage, roomId = DEFAULT_ROOM_ID, hostToken?: string) => {
+    window.location.href = makeUrl(nextPage, roomId, hostToken)
+  }
+
+  const handleHostLogin = () => {
+    if (hostId.trim() !== HOST_ID || hostPassword !== HOST_PASSWORD) {
+      setAuthError('관리자 계정 정보가 올바르지 않습니다.')
+      return
+    }
+    const token = createHostToken()
+    saveHostToken(token)
+    setAuthError('')
+    setAuthVersion((v) => v + 1)
+    go('host', queryRoom, token)
+  }
+
+  const openHostRoom = () => {
+    const token = readValidHostToken()
+    if (!token) {
+      go('host', queryRoom)
+      return
+    }
+    go('room', queryRoom, token)
+  }
+
+  const logoutHost = () => {
+    clearHostToken()
+    setAuthVersion((v) => v + 1)
+    go('rooms', queryRoom)
+  }
 
   const handleIntroStart = (payload: {
     players: PlayerSetup[]
@@ -302,9 +397,90 @@ function App() {
     dispatch({ type: 'hydrate', payload: { state: nextState } })
   }
 
+  if (page === 'rooms') {
+    return (
+      <div className="app-shell room-shell">
+        <section className="panel room-panel">
+          <h1>방 목록</h1>
+          <p className="muted">일반 접속자는 뷰어 모드입니다. 방을 선택하면 실시간 화면을 볼 수 있습니다.</p>
+          {!isFirebaseConfigured() ? (
+            <p className="intro-error">
+              Firebase 설정이 없어 실시간 연동이 비활성 상태입니다. 배포 환경 변수(VITE_FIREBASE_*)를 먼저
+              설정해 주세요.
+            </p>
+          ) : null}
+          <div className="room-list">
+            <button type="button" className="intro-start" onClick={() => go('room', DEFAULT_ROOM_ID)}>
+              기본 방 입장 (뷰어)
+            </button>
+            <button type="button" className="player-toggle-btn" onClick={() => go('host', DEFAULT_ROOM_ID)}>
+              관리자 로그인
+            </button>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  if (page === 'host') {
+    return (
+      <div className="app-shell room-shell">
+        <section className="panel room-panel">
+          <h1>관리자 페이지</h1>
+          {!savedHostToken ? (
+            <>
+              <p className="muted">관리자 전용 계정으로 로그인하세요.</p>
+              <div className="intro-players">
+                <label className="intro-field">
+                  <span>관리자 ID</span>
+                  <input value={hostId} onChange={(e) => setHostId(e.target.value)} />
+                </label>
+                <label className="intro-field">
+                  <span>관리자 PW</span>
+                  <input
+                    type="password"
+                    value={hostPassword}
+                    onChange={(e) => setHostPassword(e.target.value)}
+                  />
+                </label>
+              </div>
+              {authError ? <p className="intro-error">{authError}</p> : null}
+              <button type="button" className="intro-start" onClick={handleHostLogin}>
+                로그인
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="muted">
+                인증 완료. 아래 버튼으로 기본 방을 열고 인트로 설정(인원/색/기본동물 모드)을 진행하세요.
+              </p>
+              <div className="room-list">
+                <button type="button" className="intro-start" onClick={openHostRoom}>
+                  기본 방 개설/입장
+                </button>
+                <button type="button" className="player-reset-btn" onClick={logoutHost}>
+                  로그아웃
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+      </div>
+    )
+  }
+
   if (state.players.length === 0) {
     return (
       <div className="app-shell">
+        {!isFirebaseConfigured() ? (
+          <section className="panel room-panel">
+            <h2>실시간 연동 비활성</h2>
+            <p className="intro-error">
+              Firebase 환경 변수가 비어 있어 멀티 동기화가 동작하지 않습니다. GitHub Pages 환경 변수
+              (VITE_FIREBASE_*)를 설정해 주세요.
+            </p>
+          </section>
+        ) : null}
         {isViewer ? (
           <ViewerWaitingScreen roomId={queryRoom} />
         ) : (
@@ -540,8 +716,8 @@ function App() {
 
       <footer className="status-bar">
         <span>
-          Room: {queryRoom}
-          {isViewer ? ' · 뷰어' : ''}
+          Room: {queryRoom}{' '}
+          {page === 'room' ? (isHostSession ? '· 관리자' : '· 뷰어') : ''}
         </span>
         <span>
           {isFirebaseConfigured()

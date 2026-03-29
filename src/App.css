@@ -686,7 +686,8 @@ button.active {
   font-weight: 600;
 }
 
-.intro-field select {
+.intro-field select,
+.intro-field input {
   padding: clamp(10px, 2.5vw, 14px) 12px;
   border-radius: 10px;
   border: 1px solid #cbd5e1;
@@ -763,6 +764,25 @@ button.active {
 .intro-start:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.room-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 4vw, 28px);
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.room-panel {
+  width: min(100%, 640px);
+}
+
+.room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .viewer-wait-screen {
