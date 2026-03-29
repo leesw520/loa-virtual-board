@@ -932,50 +932,54 @@ button.active {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
+  gap: 14px;
   width: 100%;
   max-width: min(100%, 220px);
   min-width: 0;
   margin: 0 auto;
-  padding: 8px 2px 6px;
+  /* 스택 그림자·3D 층이 아래로 나올 공간 */
+  padding: 8px 2px 18px;
+  overflow: visible;
 }
 
-/* 뒷면 PNG가 가로형(배너형)이라 세로 2:3 대신 가로 비율 */
+/*
+ * 가로형 뒷면: 3/2보다 낮은 박스(세로 절약) + overflow 제거로 box-shadow 층이 잘리지 않게 함.
+ * 뒷면·베이스는 인셋을 키워 상대적으로 작게 보이게 함.
+ */
 .deck-pile-stack {
   position: relative;
   width: 100%;
   min-width: 0;
-  aspect-ratio: 3 / 2;
-  overflow: hidden;
-  /* 아래쪽 그림자가 뱃지와 겹치지 않도록 */
-  margin-bottom: 4px;
+  aspect-ratio: 8 / 5;
+  overflow: visible;
+  margin-bottom: 6px;
 }
 
 /* 얇은 덱 두께: DOM·perspective 최소화 (렉 완화), box-shadow로만 층 표현 */
 .deck-pile-under {
   position: absolute;
-  left: 4%;
-  right: 4%;
-  top: 4%;
-  bottom: 3%;
+  left: 9%;
+  right: 9%;
+  top: 6%;
+  bottom: 22%;
   border-radius: 10px;
   z-index: 0;
   pointer-events: none;
   background: linear-gradient(180deg, #1a2c24, #0f1a16);
   box-shadow:
-    0 4px 0 rgba(12, 22, 18, 0.9),
-    0 8px 0 rgba(10, 18, 15, 0.85),
-    0 12px 0 rgba(8, 14, 12, 0.8),
-    0 16px 0 rgba(6, 10, 9, 0.75);
+    0 3px 0 rgba(12, 22, 18, 0.9),
+    0 6px 0 rgba(10, 18, 15, 0.85),
+    0 9px 0 rgba(8, 14, 12, 0.8),
+    0 12px 0 rgba(6, 10, 9, 0.75);
 }
 
 /* 절대배치 img만 두면 그리드 min-width:auto가 intrinsic 폭으로 칼럼을 밀어 화면을 덮을 수 있음 → 프레임으로 한정 */
 .deck-pile-face-frame {
   position: absolute;
-  left: 4%;
-  right: 4%;
-  top: 4%;
-  bottom: 3%;
+  left: 9%;
+  right: 9%;
+  top: 6%;
+  bottom: 22%;
   z-index: 1;
   display: flex;
   align-items: center;
