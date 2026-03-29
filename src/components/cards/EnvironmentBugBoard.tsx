@@ -33,7 +33,9 @@ function DeckPile({
               aria-hidden
               style={{ transform: `translateY(${underLift}px) scale(0.97)` }}
             />
-            <img src={backSrc} alt="" className="deck-pile-face" />
+            <div className="deck-pile-face-frame">
+              <img src={backSrc} alt="" className="deck-pile-face" />
+            </div>
           </>
         ) : (
           <div className="deck-pile-empty" aria-hidden />

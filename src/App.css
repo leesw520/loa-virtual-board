@@ -916,12 +916,14 @@ button.active {
   grid-template-columns: minmax(120px, 1.25fr) repeat(4, minmax(0, 1fr));
   gap: 10px;
   align-items: start;
+  min-width: 0;
 }
 
 .stack-cell {
   display: flex;
   align-items: stretch;
   justify-content: center;
+  min-width: 0;
   min-height: 0;
 }
 
@@ -933,6 +935,7 @@ button.active {
   gap: 16px;
   width: 100%;
   max-width: min(100%, 220px);
+  min-width: 0;
   margin: 0 auto;
   padding: 8px 2px 6px;
 }
@@ -941,7 +944,9 @@ button.active {
 .deck-pile-stack {
   position: relative;
   width: 100%;
+  min-width: 0;
   aspect-ratio: 3 / 2;
+  overflow: hidden;
   /* 아래쪽 그림자가 뱃지와 겹치지 않도록 */
   margin-bottom: 4px;
 }
@@ -964,14 +969,27 @@ button.active {
     0 16px 0 rgba(6, 10, 9, 0.75);
 }
 
-/* 뒷면을 3D 베이스(.deck-pile-under)와 동일 인셋에 맞춤 — 전체 폭으로 키우면 베이스보다 커 보임 */
-.deck-pile-face {
+/* 절대배치 img만 두면 그리드 min-width:auto가 intrinsic 폭으로 칼럼을 밀어 화면을 덮을 수 있음 → 프레임으로 한정 */
+.deck-pile-face-frame {
   position: absolute;
   left: 4%;
   right: 4%;
   top: 4%;
   bottom: 3%;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  pointer-events: none;
+}
+
+.deck-pile-face {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
   object-position: center center;
   border-radius: 10px;
