@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { getCachedNaturalSize, subscribeNaturalSize } from '../../utils/imageNaturalSize'
 import { spriteRectByIndex } from '../../utils/sprite'
 
 type CardImageProps = {
@@ -15,6 +16,15 @@ function hasImage(value: string) {
   return value.trim().length > 0
 }
 
+function aspectFromSheet(size: { w: number; h: number }, columns: number, rows: number) {
+  const cardWidth = size.w / columns
+  const cardHeight = size.h / rows
+  if (cardWidth > 0 && cardHeight > 0) {
+    return cardWidth / cardHeight
+  }
+  return 2 / 3
+}
+
 export function CardImage({
   src,
   alt,
@@ -24,22 +34,27 @@ export function CardImage({
   rows = 1,
   placeholderLabel,
 }: CardImageProps) {
-  const [aspectRatio, setAspectRatio] = useState<number>(2 / 3)
+  const [aspectRatio, setAspectRatio] = useState<number>(() => {
+    if (index === undefined || !hasImage(src)) {
+      return 2 / 3
+    }
+    const cached = getCachedNaturalSize(src)
+    return cached ? aspectFromSheet(cached, columns, rows) : 2 / 3
+  })
 
   useEffect(() => {
-    if (!hasImage(src)) {
+    if (!hasImage(src) || index === undefined) {
       return
     }
-    const img = new Image()
-    img.src = src
-    img.onload = () => {
-      const cardWidth = img.naturalWidth / columns
-      const cardHeight = img.naturalHeight / rows
-      if (cardWidth > 0 && cardHeight > 0) {
-        setAspectRatio(cardWidth / cardHeight)
-      }
+    const cached = getCachedNaturalSize(src)
+    if (cached) {
+      setAspectRatio(aspectFromSheet(cached, columns, rows))
+      return
     }
-  }, [src, columns, rows])
+    return subscribeNaturalSize(src, (size) => {
+      setAspectRatio(aspectFromSheet(size, columns, rows))
+    })
+  }, [src, columns, rows, index])
 
   if (!hasImage(src)) {
     return <div className={`placeholder-card ${className ?? ''}`}>{placeholderLabel ?? alt}</div>

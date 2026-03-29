@@ -1,9 +1,11 @@
+import { normalizeBasicAnimalFaces, rollBasicAnimalFaces } from '../data/basicAnimalFaces'
 import { BUG_COUNT, ENVIRONMENT_COUNT } from '../data/cards'
 import {
   SCORE_TRACK_MAX_POSITION,
   scoreAdvanceCost,
 } from '../data/scoreTracks'
 import type {
+  BasicAnimalFace,
   DeckState,
   GameAction,
   GameState,
@@ -39,9 +41,12 @@ function makePlayers(config: PlayerSetup[], specialDeck: number[]): Player[] {
   }))
 }
 
+const defaultBasicFaces: BasicAnimalFace[] = ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A']
+
 export const emptyGameState: GameState = {
   roomId: '',
   players: [],
+  basicAnimalFaces: [...defaultBasicFaces],
   scoreTracks: {
     1: {},
     2: {},
@@ -123,8 +128,13 @@ function applyPendingAction(state: GameState, action: PendingAction): GameState 
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
-    case 'hydrate':
-      return action.payload.state
+    case 'hydrate': {
+      const incoming = action.payload.state
+      return {
+        ...incoming,
+        basicAnimalFaces: normalizeBasicAnimalFaces(incoming.basicAnimalFaces),
+      }
+    }
     case 'reset':
       return {
         ...emptyGameState,
@@ -138,10 +148,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const bugDeck = createShuffledDeck(BUG_COUNT, seed + 202)
       const specialDeck = createShuffledDeck(8, seed + 303)
       const players = makePlayers(action.payload.players, specialDeck)
+      const basicAnimalFaces: BasicAnimalFace[] = action.payload.randomBasicAnimalFaces
+        ? rollBasicAnimalFaces(seed + 404)
+        : [...defaultBasicFaces]
 
       const base: GameState = {
         roomId: action.payload.roomId,
         players,
+        basicAnimalFaces,
         scoreTracks: {
           1: Object.fromEntries(players.map((p) => [p.id, 0])),
           2: Object.fromEntries(players.map((p) => [p.id, 0])),

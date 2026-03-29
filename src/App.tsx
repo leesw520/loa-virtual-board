@@ -11,6 +11,7 @@ import {
 } from './components/overlay/ModalViewer'
 import { ReferenceOverlays } from './components/overlay/ReferenceOverlays'
 import { ScoreTracksPanel } from './components/score/ScoreTracksPanel'
+import { basicAnimalSprite } from './data/basicAnimalFaces'
 import { CARD_BACK_IMAGES, REFERENCE_IMAGES, TOKEN_VAULT_IMAGES } from './data/cards'
 import {
   SCORE_TRACK_MAX_POSITION,
@@ -76,14 +77,22 @@ function App() {
     }>
   >([])
 
-  const handleIntroStart = (players: PlayerSetup[]) => {
+  const handleIntroStart = (payload: {
+    players: PlayerSetup[]
+    randomBasicAnimalFaces: boolean
+  }) => {
     setScoreUndo({ 1: [], 2: [], 3: [] })
     setEnvironmentUndo([])
     setBugUndo([])
     setSelectedBuyer('p1')
     dispatch({
       type: 'init',
-      payload: { roomId: queryRoom, clientId, players },
+      payload: {
+        roomId: queryRoom,
+        clientId,
+        players: payload.players,
+        randomBasicAnimalFaces: payload.randomBasicAnimalFaces,
+      },
     })
   }
 
@@ -165,10 +174,12 @@ function App() {
       return null
     }
     if (modal.type === 'basic') {
+      const face = state.basicAnimalFaces[modal.id] ?? 'A'
+      const { asset, spriteIndex } = basicAnimalSprite(modal.id, face)
       return {
-        title: `기본 동물 ${modal.id + 1}`,
-        frontSrc: imagePath(modal.id % 2 === 0 ? 'basic_animals_ac' : 'basic_animals_bd'),
-        frontIndex: modal.id,
+        title: `기본 동물 ${modal.id + 1} (${face}면)`,
+        frontSrc: imagePath(asset),
+        frontIndex: spriteIndex,
         frontColumns: 4,
         frontRows: 4,
         backSrc: undefined,
@@ -371,7 +382,10 @@ function App() {
           </div>
         </section>
 
-        <AnimalBoard onOpenBasic={(id) => setModal({ type: 'basic', id })} />
+        <AnimalBoard
+          basicAnimalFaces={state.basicAnimalFaces}
+          onOpenBasic={(id) => setModal({ type: 'basic', id })}
+        />
 
         <EnvironmentBugBoard
           state={state}

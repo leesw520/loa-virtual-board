@@ -1,5 +1,8 @@
 export type PlayerColor = 'red' | 'blue' | 'green' | 'yellow'
 
+/** 기본 동물 8종 — 스프라이트 A/C는 ac 시트, B/D는 bd 시트 */
+export type BasicAnimalFace = 'A' | 'B' | 'C' | 'D'
+
 export type Player = {
   id: string
   name: string
@@ -37,6 +40,8 @@ export type PendingAction =
 export type GameState = {
   roomId: string
   players: Player[]
+  /** 길이 8 — 기본 동물 종류별 표시 면 */
+  basicAnimalFaces: BasicAnimalFace[]
   scoreTracks: ScoreTracks
   environments: DeckState
   bugs: DeckState
@@ -60,6 +65,8 @@ export type InitPayload = {
   roomId: string
   clientId: string
   players: PlayerSetup[]
+  /** true면 8종 각각 A/B/C/D 중 무작위 면 */
+  randomBasicAnimalFaces: boolean
 }
 
 export type ScoreMovePayload = {

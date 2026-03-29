@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import type { PlayerColor } from '../../types/game'
 import { PLAYER_COLORS } from '../../data/cards'
+import type { PlayerColor, PlayerSetup } from '../../types/game'
 
 type IntroScreenProps = {
-  onStart: (players: Array<{ name: string; color: PlayerColor }>) => void
+  onStart: (payload: { players: PlayerSetup[]; randomBasicAnimalFaces: boolean }) => void
 }
 
 const COLOR_LABELS: Record<PlayerColor, string> = {
@@ -15,6 +15,7 @@ const COLOR_LABELS: Record<PlayerColor, string> = {
 
 export function IntroScreen({ onStart }: IntroScreenProps) {
   const [count, setCount] = useState(4)
+  const [randomBasicAnimalFaces, setRandomBasicAnimalFaces] = useState(false)
   const [rows, setRows] = useState<Array<{ name: string; color: PlayerColor }>>(() =>
     Array.from({ length: 4 }, (_, i) => ({
       name: `Player ${i + 1}`,
@@ -95,7 +96,21 @@ export function IntroScreen({ onStart }: IntroScreenProps) {
           <p className="intro-error">색은 플레이어 간에 겹치지 않게 선택해 주세요.</p>
         ) : null}
 
-        <button type="button" className="intro-start" disabled={!canStart} onClick={() => onStart(rows)}>
+        <label className="intro-option">
+          <input
+            type="checkbox"
+            checked={randomBasicAnimalFaces}
+            onChange={(e) => setRandomBasicAnimalFaces(e.target.checked)}
+          />
+          <span>무작위 기본 동물 면 선택 (각 종류별 A/B/C/D 중 무작위)</span>
+        </label>
+
+        <button
+          type="button"
+          className="intro-start"
+          disabled={!canStart}
+          onClick={() => onStart({ players: rows, randomBasicAnimalFaces })}
+        >
           시작
         </button>
       </div>
